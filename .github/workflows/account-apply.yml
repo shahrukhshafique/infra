@@ -1,0 +1,50 @@
+name: "Terraform Account Apply"
+
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        type: environment
+        description: "Enviroment to run on"
+
+env:
+  # verbosity setting for Terraform logs
+  TF_LOG: INFO
+
+jobs:
+  apply:
+    name: "Terraform Account Apply"
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        shell: bash
+        working-directory: ${{ vars.WORKING_DIRECTORY }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v2
+        with:
+          terraform_version: "1.8.5"
+  
+      - name: Add credentials to ~/.aws/credentials
+        run: |
+            aws configure set aws_access_key_id ${{ secrets.AWS_ACCESS_KEY_ID }} --profile ${{ vars.AWS_PROFILE_NAME }} 
+            aws configure set aws_secret_access_key ${{ secrets.AWS_SECRET_ACCESS_KEY }} --profile ${{ vars.AWS_PROFILE_NAME }} 
+            aws configure set aws_region ${{ secrets.AWS_REGION }} --profile ${{ vars.AWS_PROFILE_NAME }} 
+          
+      - name: Terraform init
+        id: init
+        run: |
+          terraform init 
+          terraform version
+
+      - name: Terraform Init Status
+        if: steps.init.outcome == 'failure'
+        run: exit 1
+
+      - name: Terraform apply
+        id: apply
+        run: |
+          terraform apply -auto-approve
