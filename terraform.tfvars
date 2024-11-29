@@ -1,7 +1,7 @@
 environment       = "webapp-lab"
 deployment_region = "us-east-1"
 
-profile_name = "talbots-tf-admin"
+profile_name = "tf-admin"
 
 
 vpc = {
